@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 
 const app = express();
@@ -33,11 +33,44 @@ async function run() {
       res.send(allTasks);
     })
 
+    app.get('/tasks/:email', async (req, res) => {
+      const user = req.params.email;
+      const status = req.query.status;
+      const query = {
+        email: user,
+        status: status,
+      };
+      const allTasks = await taskCollection.find(query).toArray();
+      res.send(allTasks);
+    })
+
     app.post('/addtasks', async (req, res) => {
       const tasks = req.body;
       const result = await taskCollection.insertOne(tasks);
       res.send(result);
     });
+
+    // complete put api
+    app.put('/updatetask/:id', async (req, res) => {
+      const id = req.params.id;
+      const updatedTask = req.body;
+      const filter = { _id: ObjectId(id) }
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: updatedTask
+      }
+      const result = await taskCollection.updateOne(filter, updatedDoc, options);
+      res.send(result);
+    })
+
+    // ask delete api
+    app.delete('/deleted/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: ObjectId(id) };
+      const result = await taskCollection.deleteOne(filter)
+      res.send(result);
+    })
   }
   finally {
 
